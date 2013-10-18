@@ -295,24 +295,23 @@
 			</div>
 		</div>
 		<!-- Contact modal -->
-		<div id="contactModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-						<h3 id="myModalLabel">Contact info</h3>
-					</div>
-					<div class="modal-body">
-						<p>You can contact me at the following address:</p>
-						<img src="assets/img/contact.png" style="width: 150px;"/>
-					</div>
-					<div class="modal-footer">
-						<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-					</div>
-				</div>
-			</div>
+		#<div id="contactModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			#<div class="modal-dialog">
+			#	<div class="modal-content">
+			#		<div class="modal-header">
+			#			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			#			<h3 id="myModalLabel">Contact info</h3>
+			#		</div>
+			#		<div class="modal-body">
+			##		<img src="assets/img/contact.png" style="width: 150px;"/>
+			#		</div>
+			#		<div class="modal-footer">
+			#			<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+			#		</div>
+			#	</div>
+		#	</div>
 		</div>
 		<!-- Invisible php div-->
 		<div id="plex_check"></div>
-	</body>
+		</body>
 </html>

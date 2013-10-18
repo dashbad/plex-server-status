@@ -203,17 +203,16 @@ function ping()
 	return $avgPing;
 }
 
-function getNetwork()
+function getNetwork() //returns wan_domain if you are outside your network, and local_server_ip if you are within the network
 {
 	global $local_server_ip;
 	global $local_pfsense_ip;
 	global $wan_domain;
 	$clientIP = get_client_ip();
-	if($clientIP==$local_pfsense_ip):
+	if(preg_match("/192.168.1.*/",$clientIP))
+		$network='http://'.$local_server_ip;
+	else
 		$network=$wan_domain;
-	else:
-		$network=$wan_domain;
-	endif;
 	return $network;
 }
 
