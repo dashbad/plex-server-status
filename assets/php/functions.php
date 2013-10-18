@@ -269,6 +269,7 @@ function get_client_ip()
 
 function makeRecenlyReleased()
 {
+	global $plex_port;
 	global $plex_server_ip;
 	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/recentlyAdded');
