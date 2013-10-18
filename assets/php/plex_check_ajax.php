@@ -3,9 +3,9 @@
 	Ini_Set( 'display_errors', true );
 	include("functions.php");
 
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
-	$plexcheckfile1 = '/Users/zeus/Sites/d4rk.co/assets/misc/plexcheckfile1.txt';
-	$plexcheckfile2 = '/Users/zeus/Sites/d4rk.co/assets/misc/plexcheckfile2.txt';
+	$plexSessionXML = simplexml_load_file($plex_server_ip.'/status/sessions');
+	$plexcheckfile1 = '../misc/plexcheckfile1.txt';
+	$plexcheckfile2 = '../misc/plexcheckfile2.txt';
 	$plexcheckfile1_md5 = md5_file($plexcheckfile1);
 	$plexcheckfile2_md5 = md5_file($plexcheckfile2);
 	$nowplaying = false;

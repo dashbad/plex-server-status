@@ -7,13 +7,13 @@
 	include('assets/php/Mobile_Detect.php');
 
 	$detect = new Mobile_Detect;
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
+	$plexSessionXML = simplexml_load_file($config['plex_server_ip'].'/status/sessions');
 ?>
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>d4rk.co</title>
-		<meta name="author" content="d4rk">
+		<title>Server</title>
+		<meta name="author" content="dash">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<!-- Le styles -->
 		<link href="assets/fonts/stylesheet.css" rel="stylesheet">
@@ -228,7 +228,6 @@
 							<!-- Online profiles -->
 							<div class="panel panel-default">
 								<div class="panel-body">
-									<img src="http://www.gravatar.com/avatar/ae73e9ef5eb134c74df655c0bbb1012a.png" class="img-rounded">
 									<hr>
 									<div id="left_column_top"></div>
 								</div>

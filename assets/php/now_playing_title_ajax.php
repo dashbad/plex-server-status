@@ -7,10 +7,10 @@
 	// You will only notice the scrolling feature when there are multiple
 	// shows being watched at the same time.
 	
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
+	$plexSessionXML = simplexml_load_file($plex_server_ip.'/status/sessions');
 
 	if (count($plexSessionXML->Video) == 0):
-		$title = 'Recently Released';
+		$title = 'Recently Added';
 	else:
 		$title = 'Now Playing';
 	endif;

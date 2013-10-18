@@ -12,6 +12,5 @@
 	</script>
 	<!-- Disk Space -->
 <h4 class="exoextralight">Disk space</h4>
-<?php makeTotalDiskSpace(); ?>
 <hr>
 <?php makeDiskBars(); ?>

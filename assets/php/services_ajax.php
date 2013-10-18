@@ -4,7 +4,6 @@
 	include("functions.php");
 	include("service.class.php");
 	include("serviceSAB.class.php");
-	include("serviceMinecraft.class.php");
 ?>
 <html lang="en">
 	<script>
@@ -14,7 +13,7 @@
 	        });
 	</script>
 <?php 
-$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=qstatus&output=xml&apikey=d8f21cb16e5dd227e8e33909a2c4c081');
+$sabnzbdXML = simplexml_load_file('http://127.0.0.1:7878/api?mode=qstatus&output=xml&apikey='.$sabnzbd_api);
 
 if (($sabnzbdXML->state) == 'Downloading'):
 	$timeleft = $sabnzbdXML->timeleft;
@@ -24,15 +23,14 @@ else:
 endif;
 
 $services = array(
-	new service("Plex", 32400, "http://d4rk.co:32400/web/index.html#!/dashboard"),
-	new service("pfSense", 8082, "http://d4rk.co:8082", "d4rk.co"),
-	new serviceSAB($sabTitle, 8080, "http://d4rk.co:8080", "10.0.1.3"),
-	new service("SickBeard", 8081, "http://d4rk.co:8081"),
-	new service("CouchPotato", 5050, "http://d4rk.co:5050"),
-	new service("Transmission", 9091, "http://d4rk.co:9091"),
-	new service("iTunes Server", 3689),
-	new serviceMinecraft("Minecraft Server", 25564, "http://d4rk.co/mc"),
-	new serviceMinecraft("Feed the Beast Server", 25565, "http://d4rk.co/mc")
+	new service("Plex", 32400, "http://dashbad.com:32400/web/index.html#!/dashboard"),
+	new service("pfSense", 80, "http://192.168.1.1", "192.168.1.1"),
+	new serviceSAB($sabTitle, 7878, "http://dashbad.com:7878", "127.0.0.1:7878"),
+	new service("SickBeard", 8081, "http://dashbad.com:8081"),
+	new service("CouchPotato", 5050, "http://dashbad.com:5050"),
+	#new service("Transmission", 9091, "http://d4rk.co:9091"),
+	new service("Subsonic",4040, "http://dashbad.com:4040")
+	
 );
 ?>
 <table>

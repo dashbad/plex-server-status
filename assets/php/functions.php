@@ -1,21 +1,34 @@
+
 <?php
+
+	$config_path = "/var/www-credentials/config.ini"; //path to config file, place outside of web root
+	
 	Ini_Set( 'display_errors', false);
 	include("lib/phpseclib0.3.5/Net/SSH2.php");
-	require_once('MinecraftServerStatus.class.php');
+	$config = parse_ini_file($config_path);
+	
+	$local_pfsense_ip = $config['local_pfsense_ip'];
+	$local_server_ip = $config['local_server_ip'];
+	$wan_domain = $config['wan_domain'];
+	$plex_server_ip = $config['plex_server_ip'];
+	$ssh_username = $config['ssh_username'];
+	$ssh_password = $config['ssh_password'];
+	$plex_username = $config['plex_username'];
+	$plex_password = $config['plex_password'];
+	$forecast_api = $config['forecast_api'];
+	$sabnzbd_api = $config['sabnzbd_api'];
+	$weather_lat = $config['weather_lat'];
+	$weather_long = $config['weather_long'];
+	
 
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
 	$loads = sys_getloadavg();
 else
 	$loads = Array(0.55,0.7,1);
 
-$ereborTotalSpace = 8.96102e12; // This is in bytes
-$televisionTotalSpace = 5.95935e12; // This is in bytes
-$television2TotalSpace = 5.95935e12; // This is in bytes
-$television3TotalSpace = 4.99178e12; // This is in bytes
-
 function getCpuUsage()
 {
-	$top = shell_exec('top -l 1 -n 0');
+	$top = shell_exec('top -n 0');
 	$findme = 'idle';
 	$cpuIdleStart = strpos($top, $findme);
 	$cpuIdle = substr($top, ($cpuIdleStart - 7), 2);
@@ -28,13 +41,6 @@ function makeCpuBars()
 	printBar(getCpuUsage(), "Usage");
 }	
 
-function makeTotalDiskSpace()
-{
-	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
-	$dts = disk_total_space("/") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
-	$dup = $dts - $du;
-	printDiskBarTotal(sprintf('%.0f',($du / $dts) * 100), "Total Disk Space", $du, $dts);
-}
 
 function byteFormat($bytes, $unit = "", $decimals = 2) {
 	$units = array('B' => 0, 'KB' => 1, 'MB' => 2, 'GB' => 3, 'TB' => 4, 
@@ -66,12 +72,7 @@ function byteFormat($bytes, $unit = "", $decimals = 2) {
 function makeDiskBars()
 {
 	printDiskBarGB(getDiskspace("/"), "SSD", getDiskspaceUsed("/"), disk_total_space("/"));
-	printDiskBarGB(getDiskspace("/Volumes/Isengard"), "Isengard", getDiskspaceUsed("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
-	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", getDiskspaceUsed("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
-	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", getDiskspaceUsed("/Volumes/Erebor"), 8.96102e12);
-	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", getDiskspaceUsed("/Volumes/Television"), 5.95935e12);
-	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", getDiskspaceUsed("/Volumes/Television 2"), 5.95935e12);
-	printDiskBar(getDiskspaceTV3("/Volumes/Storage space"), "Vilya", getDiskspaceUsed("/Volumes/Storage space"), 4.99178e12);
+	printDiskBarGB(getDiskspace("/mnt/media"), "Media", getDiskspaceUsed("/mnt/media"), disk_total_space("/mnt/media"));
 }
 
 function makeRamBars()
@@ -88,13 +89,13 @@ function makeLoadBars()
 
 function getFreeRam()
 {
-	$top = shell_exec('top -l 1 -n 0');
-	$findme = 'PhysMem:';
-	$physMemStart = strpos($top, $findme);
-	$wiredRam = (substr($top, ($physMemStart + 9), 4))/1024; // GB
-	$activeRam = (substr($top, ($physMemStart + 22), 4))/1024; // GB
-	$totalRam = (substr(shell_exec('sysctl hw.memsize'), 12))/1024/1024/1024; // GB
-	$usedRam = $wiredRam + $activeRam; // Find how much ram is used.
+	$top = shell_exec('free -m');
+        #echo $top;
+        $findme = 'Mem:';
+        $MemStart = strpos($top, $findme);
+        $totalRam = (substr($top, $MemStart + 14, 4))/1000; // GB
+        $freeRam = (substr($top, $MemStart + 110, 4))/1000; // GB
+        $usedRam = $totalRam - $freeRam;
 	return array (sprintf('%.0f',($usedRam / $totalRam) * 100), 'Used Ram', $usedRam, $totalRam);
 }
 
@@ -106,14 +107,6 @@ function getDiskspace($dir)
 	return sprintf('%.0f',($du / $dt) * 100);
 }
 
-function getDiskspaceErebor($dir)
-{
-	$df = disk_free_space($dir);
-	$dt = disk_total_space($dir);
-	$du = $dt - $df;
-	return sprintf('%.0f',($du / 8.96102e12) * 100);
-}
-
 function getDiskspaceUsed($dir)
 {
 	$df = disk_free_space($dir);
@@ -122,29 +115,6 @@ function getDiskspaceUsed($dir)
 	return $du;
 }
 
-function getDiskspaceTV1($dir)
-{
-	$df = disk_free_space($dir);
-	$dt = disk_total_space($dir);
-	$du = $dt - $df;
-	return sprintf('%.0f',($du / 5.95935e12) * 100);
-}
-
-function getDiskspaceTV2($dir)
-{
-	$df = disk_free_space($dir);
-	$dt = disk_total_space($dir);
-	$du = $dt - $df;
-	return sprintf('%.0f',($du / 5.95935e12) * 100);
-}
-
-function getDiskspaceTV3($dir)
-{
-	$df = disk_free_space($dir);
-	$dt = disk_total_space($dir);
-	$du = $dt - $df;
-	return sprintf('%.0f',($du / 4.99178e12) * 100);
-}
 
 function getLoad($id)
 {
@@ -190,57 +160,6 @@ function printRamBar($percent, $name = "", $used, $total)
 	echo '</div>';
 }
 
-function printDiskBarTotal($dup, $name = "", $dsu, $dts)
-{
-	if ($dup < 90)
-	{
-		$progress = "progress-bar";
-	}
-	else if (($dup >= 90) && ($dup < 95))
-	{
-		$progress = "progress-bar progress-bar-warning";
-	}
-	else
-	{
-		$progress = "progress-bar progress-bar-danger";
-	}
-	
-	if ($name != "") echo '<!-- ' . $name . ' -->';
-	echo '<div class="exolight">';
-		if ($name != "")
-			echo $name . ": ";
-			echo number_format($dup, 0) . "%";
-		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($dsu, "TB", 2) . ' / ' . byteFormat($dts, "TB", 2) . '" class="progress">';
-			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
-		echo '</div>';
-	echo '</div>';
-}
-
-function printDiskBar($dup, $name = "", $dsu, $dts)
-{
-	if ($dup < 90)
-	{
-		$progress = "progress-bar";
-	}
-	else if (($dup >= 90) && ($dup < 95))
-	{
-		$progress = "progress-bar progress-bar-warning";
-	}
-	else
-	{
-		$progress = "progress-bar progress-bar-danger";
-	}
-
-	if ($name != "") echo '<!-- ' . $name . ' -->';
-	echo '<div class="exolight">';
-		if ($name != "")
-			echo $name . ": ";
-			echo number_format($dup, 0) . "%";
-		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($dsu, "TB", 2) . ' / ' . byteFormat($dts, "TB", 2) . '" class="progress">';
-			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
-		echo '</div>';
-	echo '</div>';
-}
 
 function printDiskBarGB($dup, $name = "", $dsu, $dts)
 {
@@ -270,9 +189,10 @@ function printDiskBarGB($dup, $name = "", $dsu, $dts)
 
 function ping()
 {
+	global $local_server_ip;
 	$clientIP = get_client_ip();
 	$pingIP = '8.8.8.8';
-	if($clientIP != '10.0.1.1') {
+	if($clientIP != $local_server_ip) {
 		$pingIP = $clientIP;
 	}
 	$terminal = shell_exec('ping -c 5 '.$pingIP);
@@ -284,11 +204,14 @@ function ping()
 
 function getNetwork()
 {
+	global $local_server_ip;
+	global $local_pfsense_ip;
+	global $wan_domain;
 	$clientIP = get_client_ip();
-	if($clientIP=='10.0.1.1'):
-		$network='http://10.0.1.3';
+	if($clientIP==$local_pfsense_ip):
+		$network=$wan_domain;
 	else:
-		$network='http://d4rk.co';
+		$network=$wan_domain;
 	endif;
 	return $network;
 }
@@ -305,49 +228,49 @@ function get_client_ip()
 	return $ipaddress;
 }
 
-function makeRecenlyPlayed()
-{
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
-	$clientIP = get_client_ip();
-
-	$network = getNetwork();
-	$trakt_url = 'http://trakt.tv/user/d4rk/widgets/watched/all-tvthumb.jpg';
-	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/misc/all-tvthumb.jpg';
-
-	echo '<div class="col-md-12">';
-	echo '<a href="http://trakt.tv/user/d4rk" class="thumbnail">';
-	if (file_exists($traktThumb) && (filemtime($traktThumb) > (time() - 60 * 15))) {
-		// Trakt image is less than 15 minutes old.
-		// Don't refresh the image, just use the file as-is.
-		echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
-	} else {
-		// Either file doesn't exist or our cache is out of date,
-		// so check if the server has different data,
-		// if it does, load the data from our remote server and also save it over our cache for next time.
-		$thumbFromTrakt_md5 = md5_file($trakt_url);
-		$traktThumb_md5 = md5_file($traktThumb);
-		if ($thumbFromTrakt_md5 === $traktThumb_md5) {
-			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
-		} else {
-			$thumbFromTrakt = file_get_contents($trakt_url);
-			file_put_contents($traktThumb, $thumbFromTrakt, LOCK_EX);
-			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
-
-		}
-	}
-	if($clientIP == '10.0.1.1' && count($plexSessionXML->Video) == 0) {
-		echo '<hr>';
-		echo '<h1 class="exoextralight" style="margin-top:5px;">';
-		echo 'Forecast</h1>';
-		echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=40.7838&lon=-96.622773&name=Lincoln, NE"> </iframe>';
-	}
-	echo '</div>';
-}
+#function makeRecenlyPlayed()
+#{
+#	$plexSessionXML = simplexml_load_file('http://127.0.0.1:32400/status/sessions');
+#	$clientIP = get_client_ip();
+#
+#	$network = getNetwork();
+#	$trakt_url = 'http://trakt.tv/user/d4rk/widgets/watched/all-tvthumb.jpg';
+#	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/misc/all-tvthumb.jpg';
+#
+#	echo '<div class="col-md-12">';
+#	if (file_exists($traktThumb) && (filemtime($traktThumb) > (time() - 60 * 15))) {
+#		// Trakt image is less than 15 minutes old.
+#		// Don't refresh the image, just use the file as-is.
+#		echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+#	} else {
+#		// Either file doesn't exist or our cache is out of date,
+#		// so check if the server has different data,
+#		// if it does, load the data from our remote server and also save it over our cache for next time.
+#		$thumbFromTrakt_md5 = md5_file($trakt_url);
+#		$traktThumb_md5 = md5_file($traktThumb);
+#		if ($thumbFromTrakt_md5 === $traktThumb_md5) {
+#			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+#		} else {
+#			$thumbFromTrakt = file_get_contents($trakt_url);
+#			file_put_contents($traktThumb, $thumbFromTrakt, LOCK_EX);
+#			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+#
+#		}
+#	}
+#	if($clientIP == '127.0.0.1' && count($plexSessionXML->Video) == 0) {
+#		echo '<hr>';
+#		echo '<h1 class="exoextralight" style="margin-top:5px;">';
+#		echo 'Forecast</h1>';
+#		echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=40.7838&lon=-96.622773&name=Lincoln, NE"> </iframe>';
+#	}
+#	echo '</div>';
+#}
 
 function makeRecenlyReleased()
 {
-	$plexToken = 'pastPlextokenhere';	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
-	$plexNewestXML = simplexml_load_file('http://10.0.1.3:32400/library/sections/7/newest');
+	global $plex_server_ip;
+	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/newest');
 	$clientIP = get_client_ip();
 	$network = getNetwork();
 	
@@ -364,7 +287,7 @@ function makeRecenlyReleased()
 	echo '<div class="carousel-inner">';
 	echo '<div class="item active">';
 	$mediaKey = $plexNewestXML->Video[0]['key'];
-	$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+	$mediaXML = simplexml_load_file($plex_server_ip.$mediaKey);
 	$movieTitle = $mediaXML->Video['title'];
 	$movieArt = $mediaXML->Video['thumb'];
 	echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
@@ -373,7 +296,7 @@ function makeRecenlyReleased()
 	for ( ; ; ) {
 		if($i==15) break;
 		$mediaKey = $plexNewestXML->Video[$i]['key'];
-		$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+		$mediaXML = simplexml_load_file($plex_server_ip.$mediaKey);
 		$movieTitle = $mediaXML->Video['title'];
 		$movieArt = $mediaXML->Video['thumb'];
 		$movieYear = $mediaXML->Video['year'];
@@ -409,9 +332,10 @@ function makeRecenlyReleased()
 
 function makeNowPlaying()
 {
-	$plexToken = 'pastPlextokenhere';	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	global $plex_server_ip;
+	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$network = getNetwork();
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
+	$plexSessionXML = simplexml_load_file($plex_server_ip.'/status/sessions');
 
 	if (count($plexSessionXML->Video) == 0):
 		makeRecenlyReleased();
@@ -425,7 +349,7 @@ function makeNowPlaying()
 		foreach ($plexSessionXML->Video as $sessionInfo):
 			$mediaKey=$sessionInfo['key'];
 			$playerTitle=$sessionInfo->Player['title'];
-			$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+			$mediaXML = simplexml_load_file($plex_server_ip.$mediaKey);
 			$type=$mediaXML->Video['type'];
 			echo '<div class="thumbnail">';
 			$i++; // Increment i every pass through the array
@@ -484,21 +408,24 @@ function makeBandwidthBars()
 
 function getBandwidth()
 {
-	$ssh = new Net_SSH2('10.0.1.1');
-	if (!$ssh->login('username', 'password')) { // replace password and username with pfSense ssh username and password if you want to use this
+    global $local_pfsense_ip;
+	global $ssh_username;
+	global $ssh_password;
+	$ssh = new Net_SSH2($local_pfsense_ip);
+	if (!$ssh->login($ssh_username,$ssh_password)) { // replace password and username with pfSense ssh username and password if you want to use this
 		exit('Login Failed');
 	}
 
-	$dump = $ssh->exec('vnstat -i nve0 -tr');
-	$output = preg_split('/[,;| \s]/', $dump);
+	$dump = $ssh->exec('vnstat -i pppoe0 -tr');
+	$output = preg_split('/[\.|\s]/', $dump);
 	for ($i=count($output)-1; $i>=0; $i--) {
 		if ($output[$i] == '') unset ($output[$i]);
 	}
 	$output = array_values($output);
-	$rxRate = $output[51];
-	$rxFormat = $output[52];
-	$txRate = $output[56];
-	$txFormat = $output[57];
+	$rxRate = $output[54];
+	$rxFormat = $output[56];
+	$txRate = $output[60];
+	$txFormat = $output[62];
 	if ($rxFormat == 'kbit/s') {
 		$rxRateMB = $rxRate / 1024;
 	} else {
@@ -509,6 +436,9 @@ function getBandwidth()
 	} else {
 		$txRateMB = $txRate;
 	}
+	$rxRateMB = floatval($rxRateMB);
+	$txRateMB = floatval($txRateMB);
+
 	return  array($rxRateMB, $txRateMB);
 }
 
@@ -518,30 +448,22 @@ function printBandwidthBar($percent, $name = "", $Mbps)
 	echo '<div class="exolight">';
 		if ($name != "")
 			echo $name . ": ";
-			echo number_format($Mbps, 2) . " Mbps";
+			echo number_format($Mbps,2) . " Mbps";
 		echo '<div class="progress">';
 			echo '<div class="progress-bar" style="width: ' . $percent . '%"></div>';
 		echo '</div>';
 	echo '</div>';
 }
 
-function getMinecraftPlayers($port)
-{
-	$server = new MinecraftServerStatus('127.0.0.1',$port);
-	$players = false;
-	$numplayers = 0;
-	if($server->Get('numplayers')>"0") {
-		$players = true;
-		$numplayers = $server->Get('numplayers');
-	}
-
-	return array($players, $numplayers);
-}
 
 function getPlexToken()
 {
-	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: my-app" -u"usernameoremailformyPlex":"password" -X POST https://my.plexapp.com/users/sign_in.xml');
-	return $myPlex;
+    global $plex_username;
+	global $plex_password;
+	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: my-app" -u "'.$plex_username.'"":""'.$plex_password.'" -X POST https://my.plexapp.com/users/sign_in.xml 2> /dev/null');
+        $myPlex_xml = simplexml_load_string($myPlex);
+        $token = $myPlex_xml['authenticationToken'];
+	return $token;
 }
 
 function getDir($b)
@@ -552,12 +474,14 @@ function getDir($b)
 
 function makeWeatherSidebar()
 {
-	$forecastAPI = '9ba695cdbc7eb99f6b4fb181897a8c29';
-	$forecastExcludes = '?exclude=daily,flags';
-	// Lincoln, NE lat/long = 40.784007 -96.620592
-	$forecastLat = '40.784007';
-	$forecastLong = '-96.620592';
-	$currentForecast = json_decode(file_get_contents('https://api.forecast.io/forecast/'.$forecastAPI.'/'.$forecastLat.','.$forecastLong.$forecastExcludes));
+    global $weather_lat;
+	global $weather_long;
+	global $forecast_api;
+	$forecastExcludes = '?exclude=daily,flags&units=si';
+	// Kennington, London
+	$forecastLat = $weather_lat;
+	$forecastLong = $weather_long;
+	$currentForecast = json_decode(file_get_contents('https://api.forecast.io/forecast/'.$forecast_api.'/'.$forecastLat.','.$forecastLong.$forecastExcludes));
 
 	$currentSummary = $currentForecast->currently->summary;
 	$currentSummaryIcon = $currentForecast->currently->icon;
@@ -611,7 +535,7 @@ function makeWeatherSidebar()
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$minutelySummary.'</h5>';
 	echo '<h4 class="exoregular">Next 24 Hours</h4>';
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$hourlySummary.'</h5>';
-	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/40.7838,-96.622773">Forecast.io</a></small></p> ';
+	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/.$forecast_lat','.$forecast_long.">Forecast.io</a></small></p> ';
 }
 
 ?>
