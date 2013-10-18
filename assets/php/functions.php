@@ -1,7 +1,7 @@
 
 <?php
 
-	$config_path = "/var/www-credentials/config.ini"; //path to config file, place outside of web root
+	$config_path = "/var/www-credentials/config.ini"; //path to config file, recommend you place it outside of web root
 	
 	Ini_Set( 'display_errors', false);
 	include("lib/phpseclib0.3.5/Net/SSH2.php");
@@ -19,6 +19,7 @@
 	$sabnzbd_api = $config['sabnzbd_api'];
 	$weather_lat = $config['weather_lat'];
 	$weather_long = $config['weather_long'];
+	$plex_port = $config['plex_port'];
 	
 
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
@@ -270,7 +271,7 @@ function makeRecenlyReleased()
 {
 	global $plex_server_ip;
 	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
-	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/newest');
+	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/recentlyAdded');
 	$clientIP = get_client_ip();
 	$network = getNetwork();
 	
@@ -290,7 +291,7 @@ function makeRecenlyReleased()
 	$mediaXML = simplexml_load_file($plex_server_ip.$mediaKey);
 	$movieTitle = $mediaXML->Video['title'];
 	$movieArt = $mediaXML->Video['thumb'];
-	echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+	echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
 	echo '</div>'; // Close item div
 	$i=1;
 	for ( ; ; ) {
@@ -301,7 +302,7 @@ function makeRecenlyReleased()
 		$movieArt = $mediaXML->Video['thumb'];
 		$movieYear = $mediaXML->Video['year'];
 		echo '<div class="item">';
-		echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+		echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
 		//echo '<div class="carousel-caption">';
 		//echo '<h3>'.$movieTitle.$movieYear.'</h3>';
 		//echo '<p>Summary</p>';
@@ -356,7 +357,7 @@ function makeNowPlaying()
 			if ($type == "movie"):
 				// Build information for a movie
 				$movieArt = $mediaXML->Video['thumb'];
-				echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
 				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
 				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
@@ -370,7 +371,7 @@ function makeNowPlaying()
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];
-				echo '<img src="'.$network.':32400'.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="'.$network.':'.$plex_port.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
 				echo '<div class="caption">';
 				$showTitle = $mediaXML->Video['grandparentTitle'];
 				$episodeTitle = $mediaXML->Video['title'];
@@ -535,7 +536,7 @@ function makeWeatherSidebar()
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$minutelySummary.'</h5>';
 	echo '<h4 class="exoregular">Next 24 Hours</h4>';
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$hourlySummary.'</h5>';
-	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/.$forecast_lat','.$forecast_long.">Forecast.io</a></small></p> ';
+	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/',$forecastLat,',',$forecastLong,'">Forecast.io</a></small></p>';
 }
 
 ?>
