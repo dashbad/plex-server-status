@@ -1,4 +1,4 @@
-[network details]
+[network]
 local_pfsense_ip = "192.168.1.1"
 local_server_ip = "192.168.1.5"
 wan_domain = "http://domain.com" ; include http://
@@ -6,16 +6,22 @@ plex_server_ip = "http://127.0.0.1:32400" ; can be relative to server_ip, i.e. l
 plex_port = 32400
 
 [credentials]
-ssh_username = 
-ssh_password = 
+ssh_username = 		;for pfsense
+ssh_password = 		;for pfsense
 plex_username = 
 plex_password = 
 
-[api keys]
+[api_keys]
 forecast_api = 
 sabnzbd_api = 
 
 [misc]
-weather_lat = '51.4860'
-weather_long = '-0.0986'
+weather_lat = ''
+weather_long = ''
+
+[zpools]
+name1 = 
+
+[Filesystems] ;formatted as mountpoint,name
+FS1 = "/,root"
 

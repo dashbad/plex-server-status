@@ -7,7 +7,7 @@
 	include('assets/php/Mobile_Detect.php');
 
 	$detect = new Mobile_Detect;
-	$plexSessionXML = simplexml_load_file($config['plex_server_ip'].'/status/sessions');
+	$plexSessionXML = simplexml_load_file($config['network']['plex_server_ip'].'/status/sessions');
 ?>
 <html lang="en">
 	<head>
@@ -49,6 +49,34 @@
 			.exoregular {
 				font-family:"exoregular";
 			}
+			/* Changes carousel slide transition to fade transition */
+			.carousel {
+				overflow: hidden;
+			}
+			.carousel .item {
+				-webkit-transition: opacity 1s;
+				-moz-transition: opacity 1s;
+				-ms-transition: opacity 1s;
+				-o-transition: opacity 1s;
+				transition: opacity 1s;
+			}
+			.carousel .active.left, .carousel .active.right {
+				left:0;
+				opacity:0;
+				z-index:2;
+			}
+			.carousel .next, .carousel .prev {
+				left:0;
+				opacity:1;
+				z-index:1;
+			}
+			/* Disables shadowing on right and left sides of carousel images for a crisp look */
+			.carousel-control.left {
+				background-image: none;
+			}
+			.carousel-control.right {
+				background-image: none;
+			}
 		</style>
 		<link rel="apple-touch-icon-precomposed" href="/assets/ico/apple-touch-icon.png" />
 		<link rel="shortcut icon" href="assets/ico/favicon.ico">
@@ -74,6 +102,7 @@
 		            			$('#services').show();
 						$('#system_load').show();
 						$('#disk_space').show();
+						$('#zfs').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
@@ -85,6 +114,7 @@
 				            	$('#services').show();
 						$('#system_load').show();
 						$('#disk_space').show();
+						$('#zfs').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
@@ -96,6 +126,7 @@
 				            	$('#services').show();
 						$('#system_load').show();
 						$('#disk_space').show();
+						$('#zfs').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
@@ -110,6 +141,7 @@
 				var $services_refresh = $('#services');
 			        	var $system_load_refresh = $('#system_load');
 			        	var $disk_space_refresh = $('#disk_space');
+			        	var $zfs_refresh = $('#zfs');
 			        	var $now_playing_title_refresh = $('#now_playing_title');
 			        	var $now_playing_refresh = $('#now_playing');
 			        	var $system_ram_refresh = $('#system_ram');
@@ -122,6 +154,7 @@
 			        	$services_refresh.load("assets/php/services_ajax.php");
 			        	$system_load_refresh.load("assets/php/system_load_ajax.php");
 			        	$disk_space_refresh.load("assets/php/disk_space_ajax.php");
+			        	$zfs_refresh.load("assets/php/zfs_ajax.php");
 			        	$now_playing_title_refresh.load("assets/php/now_playing_title_ajax.php");
 			        	$now_playing_refresh.load("assets/php/now_playing_ajax.php");
 			        	$system_ram_refresh.load("assets/php/system_ram_ajax.php");
@@ -147,6 +180,7 @@
 			        	var refreshIdslow = setInterval(function(){
 			            	$disk_space_refresh.load('assets/php/disk_space_ajax.php');
 			            	$system_ram_refresh.load('assets/php/system_ram_ajax.php');
+			            	$zfs_refresh.load("assets/php/zfs_ajax.php");
 			        	}, 300000); // 5 minutes
 
 			        	var refreshtopleft = setInterval(function(){
@@ -286,30 +320,17 @@
 									<h4 class="exoextralight">Memory</h4>
 									<div id="system_ram" style="height:40px"></div>
 									<hr>
+									<h4 class="exoextralight">Disk space</h4>
 									<div id="disk_space"></div>
+									<hr>
+									<h4 class="exoextralight">ZPools</h4>
+									<div id="zfs"></div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<!-- Contact modal -->
-		#<div id="contactModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-			#<div class="modal-dialog">
-			#	<div class="modal-content">
-			#		<div class="modal-header">
-			#			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-			#			<h3 id="myModalLabel">Contact info</h3>
-			#		</div>
-			#		<div class="modal-body">
-			##		<img src="assets/img/contact.png" style="width: 150px;"/>
-			#		</div>
-			#		<div class="modal-footer">
-			#			<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-			#		</div>
-			#	</div>
-		#	</div>
 		</div>
 		<!-- Invisible php div-->
 		<div id="plex_check"></div>

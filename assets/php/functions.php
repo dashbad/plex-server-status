@@ -1,25 +1,28 @@
 
 <?php
 
-	$config_path = "/var/www-credentials/config.ini"; //path to config file, recommend you place it outside of web root
+	$config_path = "/home/dash/sites/server/status/assets/php/config.ini"; //path to config file, recommend you place it outside of web root
 	
 	Ini_Set( 'display_errors', false);
 	include("lib/phpseclib0.3.5/Net/SSH2.php");
-	$config = parse_ini_file($config_path);
+	$config = parse_ini_file($config_path, true);
 	
-	$local_pfsense_ip = $config['local_pfsense_ip'];
-	$local_server_ip = $config['local_server_ip'];
-	$wan_domain = $config['wan_domain'];
-	$plex_server_ip = $config['plex_server_ip'];
-	$ssh_username = $config['ssh_username'];
-	$ssh_password = $config['ssh_password'];
-	$plex_username = $config['plex_username'];
-	$plex_password = $config['plex_password'];
-	$forecast_api = $config['forecast_api'];
-	$sabnzbd_api = $config['sabnzbd_api'];
-	$weather_lat = $config['weather_lat'];
-	$weather_long = $config['weather_long'];
-	$plex_port = $config['plex_port'];
+	$local_pfsense_ip = $config['network']['local_pfsense_ip'];
+	$local_server_ip = $config['network']['local_server_ip'];
+	$wan_domain = $config['network']['wan_domain'];
+	$plex_server_ip = $config['network']['plex_server_ip'];
+	$ssh_username = $config['credentials']['ssh_username'];
+	$ssh_password = $config['credentials']['ssh_password'];
+	$plex_username = $config['credentials']['plex_username'];
+	$plex_password = $config['credentials']['plex_password'];
+	$forecast_api = $config['api_keys']['forecast_api'];
+	$sabnzbd_api = $config['api_keys']['sabnzbd_api'];
+	$weather_lat = $config['misc']['weather_lat'];
+	$weather_long = $config['misc']['weather_long'];
+	$plex_port = $config['network']['plex_port'];
+	$zpools = $config['zpools'];
+	$filesystems = $config['filesystems'];
+
 	
 
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
@@ -72,8 +75,12 @@ function byteFormat($bytes, $unit = "", $decimals = 2) {
 
 function makeDiskBars()
 {
-	printDiskBarGB(getDiskspace("/"), "SSD", getDiskspaceUsed("/"), disk_total_space("/"));
-	printDiskBarGB(getDiskspace("/mnt/media"), "Media", getDiskspaceUsed("/mnt/media"), disk_total_space("/mnt/media"));
+	global $filesystems;
+	foreach ($filesystems as $fs_index => $fs_info){
+		$fs = explode(",",$fs_info);
+	
+	printDiskBarGB(getDiskspace($fs[0]), $fs[1], getDiskspaceUsed($fs[0]), disk_total_space($fs[0]));
+}
 }
 
 function makeRamBars()
@@ -114,6 +121,68 @@ function getDiskspaceUsed($dir)
 	$dt = disk_total_space($dir);
 	$du = $dt - $df;
 	return $du;
+}
+
+function zpoolHealth($name) //returns status of provided zpool
+{
+	$zpool = shell_exec('/sbin/zpool status '.$name);
+        $findme = 'state:';
+        $stateStart = strpos($zpool, $findme);
+        $health = (substr($zpool, $stateStart + 7, 8)); // GB
+	return $health;
+}	
+
+function zfsFilesystems($zpool) //returns 2 dimensional array of all filesystems in provided zpool, with name, used space and available space
+{
+		$output = shell_exec('/sbin/zfs get -r -o name,value -Hp used,avail '.$zpool);
+        $zfs_fs_stats = preg_split('/[\n|\t]/',$output);
+        $zfs_fs_stats_p = array_pop($zfs_fs_stats);
+		$zfs_fs_array = array_chunk($zfs_fs_stats,4);
+		return $zfs_fs_array;
+}
+
+function printZpools()
+{
+	global $zpools;
+	foreach ($zpools as $index => $name) {
+	$status = zpoolHealth($name);
+	$fs = zfsFilesystems($name);
+	$fs_avail = $fs[0][3];
+	$fs_used = 0;
+	foreach($fs as $fs_ind => $fss) {
+		$fs_used += $fss[1];
+		}
+	$fs_total = $fs_used + $fs_avail;
+	$fs_pct = number_format(($fs_used / $fs_total)*100);
+	$online = $status == "ONLINE" ? 'True' : 'False';
+	$zp = new zpool($name, $status, $online);
+	echo '<table>';
+		echo '<tr>';
+			echo '<td style="text-align: right; padding-right:5px;" class="exoextralight">'.$zp->name.': '.number_format($fs_pct, 0) .'%</td>';
+			echo '<td style="text-align: left;">'.$zp->makeButton().'</td>';
+		echo '</tr>';
+		echo '</table>';
+			echo '<div id="zfs_'.$zp->name.'" class="collapse">';
+				echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($fs_used, "GB", 0) . ' / ' . byteFormat($fs_total, "GB", 0) . '" class="progress">';
+					echo '<div class="progress">';
+  					echo '<div class="progress-bar" style="width: '.$fs_pct.'%"></div>';
+  					echo '<span class="sr-only">'.$fs_pct.'% Complete</span>';
+  					echo '</div>';
+  				echo '</div>';
+			foreach($fs as $fs_ind => $fss){
+				$fss_n = $fss[0];
+				$fss_u = $fss[1];
+				$fss_p = number_format(($fss_u / $fs_total)*100);
+				echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="'.$fss_n.': ' . byteFormat($fss_u, "GB", 0) . '" class="progress">';
+					echo '<div class="progress">';
+  					echo '<div class="progress-bar" style="width: '.$fss_p.'%"></div>';
+  					echo '<span class="sr-only">'.$fss_p.'% Complete</span>';
+  					echo '</div>';
+  				echo '</div>';
+				}
+			echo '</div>';
+		
+	}
 }
 
 
@@ -334,6 +403,7 @@ function makeRecenlyReleased()
 function makeNowPlaying()
 {
 	global $plex_server_ip;
+	global $plex_port;
 	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$network = getNetwork();
 	$plexSessionXML = simplexml_load_file($plex_server_ip.'/status/sessions');

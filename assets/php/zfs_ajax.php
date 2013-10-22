@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <?php
-	Ini_Set( 'display_errors', false);
+	Ini_Set( 'display_errors', true );
 	include("functions.php");
+	include("zfs.class.php");
 ?>
 <html lang="en">
 	<script>
@@ -10,4 +11,11 @@
 	        { $("[rel=tooltip]").tooltip();
 	        });
 	</script>
-<?php makeDiskBars(); ?>
+<?php printZpools(); ?>
+
+
+		
+
+		
+
+
