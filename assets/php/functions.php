@@ -175,7 +175,7 @@ function printZpools()
 				$fss_p = number_format(($fss_u / $fs_total)*100);
 				echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="'.$fss_n.': ' . byteFormat($fss_u, "GB", 0) . '" class="progress">';
 					echo '<div class="progress">';
-  					echo '<div class="progress-bar" style="width: '.$fss_p.'%"></div>';
+  					echo '<div class="progress-bar progress-bar-success" style="width: '.$fss_p.'%"></div>';
   					echo '<span class="sr-only">'.$fss_p.'% Complete</span>';
   					echo '</div>';
   				echo '</div>';
