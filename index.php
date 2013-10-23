@@ -267,6 +267,11 @@
 						<div class="col-md-3" style="padding-top: 20px;">
 							<!-- Weather-->
 							<div class="panel panel-default">
+							<div class="panel-heading">
+									<h4 class="panel-title exoextralight">
+										Weather
+									</h4>
+							</div>		
 								<div class="panel-body">	
 									<div id="left_column_top"></div>
 								</div>
@@ -319,6 +324,11 @@
 						endif;?>
 							<!-- Server info -->
 							<div class="panel panel-default">
+							<div class="panel-heading">
+									<h4 class="panel-title exoextralight">
+										Server Info
+									</h4>
+									</div>
 								<div class="panel-body">
 									<h4 class="exoextralight">Load</h4>
 									<div id="system_load"></div>
@@ -329,13 +339,17 @@
 									<h4 class="exoextralight">Disk space</h4>
 									<div id="disk_space"></div>
 									<hr>
-									<h4 class="exoextralight">ZPools</h4>
+									<h4 class="exoextralight">ZPool info</h4>
 									<div id="zfs"></div>
-									<hr>
-									<h4 class="exoextralight">Plex library</h4>
-									<div id="plex_movie_stats"></div>
 								</div>
 							</div>
+							<div class="panel panel-default">
+							<div class="panel-heading">
+									<h4 class="panel-title exoextralight">
+										Plex library
+									</h4>
+									</div>	
+									<div id="plex_movie_stats"></div>
 						</div>
 					</div>
 				</div>
