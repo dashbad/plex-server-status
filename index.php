@@ -106,6 +106,7 @@
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
+						$('#plex_movie_stats').show();
 		            		},
 				            complete: function() {
 				            	$('#left_column_top').show();
@@ -118,6 +119,7 @@
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
+						$('#plex_movie_stats').show();
 				            },
 				            success: function() {
 				            	$('#left_column_top').show();
@@ -130,6 +132,7 @@
 						$('#now_playing_title').show();
 						$('#now_playing').show();
 						$('#system_ram').show();
+						$('#plex_movie_stats').show();
 				            }
 				});
 
@@ -145,6 +148,7 @@
 			        	var $now_playing_title_refresh = $('#now_playing_title');
 			        	var $now_playing_refresh = $('#now_playing');
 			        	var $system_ram_refresh = $('#system_ram');
+			        	var $plex_movie_stats_refresh = $('#plex_movie_stats');
 
 			        	// Load external php files & assign variables
 			        	$plex_check_refresh.load('assets/php/plex_check_ajax.php');
@@ -158,6 +162,7 @@
 			        	$now_playing_title_refresh.load("assets/php/now_playing_title_ajax.php");
 			        	$now_playing_refresh.load("assets/php/now_playing_ajax.php");
 			        	$system_ram_refresh.load("assets/php/system_ram_ajax.php");
+			        	$plex_movie_stats_refresh.load("assets/php/plex_movie_stats_ajax.php");
 			        
 				var refreshIdfastest = setInterval(function(){
 			        		$plex_check_refresh.load('assets/php/plex_check_ajax.php');
@@ -181,6 +186,7 @@
 			            	$disk_space_refresh.load('assets/php/disk_space_ajax.php');
 			            	$system_ram_refresh.load('assets/php/system_ram_ajax.php');
 			            	$zfs_refresh.load("assets/php/zfs_ajax.php");
+			            	$plex_movie_stats_refresh.load("assets/php/plex_movie_stats_ajax.php")
 			        	}, 300000); // 5 minutes
 
 			        	var refreshtopleft = setInterval(function(){
@@ -259,10 +265,9 @@
 					<div class="row">
 						<!-- Left sidebar -->
 						<div class="col-md-3" style="padding-top: 20px;">
-							<!-- Online profiles -->
+							<!-- Weather-->
 							<div class="panel panel-default">
-								<div class="panel-body">
-									<hr>
+								<div class="panel-body">	
 									<div id="left_column_top"></div>
 								</div>
 							</div>
@@ -302,6 +307,7 @@
 							endif;
 								echo '</div>';?>
 							<hr class="visible-xs">
+							<hr>
 						</div>
 						<!-- Right sidebar -->
 						<?php echo '<div class="col-md-3"';
@@ -325,6 +331,9 @@
 									<hr>
 									<h4 class="exoextralight">ZPools</h4>
 									<div id="zfs"></div>
+									<hr>
+									<h4 class="exoextralight">Plex library</h4>
+									<div id="plex_movie_stats"></div>
 								</div>
 							</div>
 						</div>

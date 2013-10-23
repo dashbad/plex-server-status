@@ -468,6 +468,96 @@ function makeNowPlaying()
 	endif;
 }
 
+function plexMovieStats()
+{
+	global $plex_port;
+	global $plex_server_ip;
+	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/all');
+	$clientIP = get_client_ip();
+	$network = getNetwork();
+	$total_movies = count($plexNewestXML -> Video);
+	$hd1080 = count($plexNewestXML->xpath("Video/Media[@videoResolution='1080']/parent::*"));
+	$hd720 = count($plexNewestXML->xpath("Video/Media[@videoResolution='720']/parent::*"));
+	$sd = ($total_movies - $hd1080 - $hd720);
+	//$sd = count($plexNewestXML->xpath("Video/Media[@videoResolution='sd']/parent::*"));
+	$hd1080_pc = number_format(($hd1080 / $total_movies)*100);
+	$hd720_pc = number_format(($hd720 / $total_movies)*100);
+	$sd_pc = number_format(($sd / $total_movies)*100);
+	$bitrate_1080 = 0;
+	foreach ($plexNewestXML->Video as $video) { //we assume that there is only one audio stream. Video bitrate alone does not seem to appear in the plex xml
+		foreach ($video->Media as $media){
+			if ($media['videoResolution'] == '1080'){
+				$duration = ((string)$media['duration']/1000); //convert from milliseconds to seconds
+				$size = ((string)$media->Part['size']/131072); //we need to convert from bytes into Megabits
+				$audio_size = ((((string)$media['bitrate']*$duration))/131072);
+				$bitrate_1080 += (($size - $audio_size) / ($duration));
+			}
+		}
+	}
+	$bitrate_720 = 0;
+	foreach ($plexNewestXML->Video as $video) {
+		foreach ($video->Media as $media){
+			if ($media['videoResolution'] == '720'){
+				$duration = ((string)$media['duration']/1000);
+				$size = ((string)$media->Part['size']/131072);
+				$audio_size = ((((string)$media['bitrate']*$duration))/131072);
+				$bitrate_720 += (($size - $audio_size) / ($duration));
+			}
+		}
+	}
+	$bitrate_sd = 0;
+	foreach ($plexNewestXML->Video as $video) {
+		foreach ($video->Media as $media){
+			if ($media['videoResolution'] != '720' and $media['videoResolution'] != '1080'){
+				$duration = ((string)$media['duration']/1000);
+				$size = ((string)$media->Part['size']/131072);
+				$audio_size = ((((string)$media['bitrate']*$duration))/131072);
+				$bitrate_sd += (($size - $audio_size) / ($duration));
+			}
+		}
+	}
+	$bitrate_1080_av = ($bitrate_1080 / $hd1080);
+	$bitrate_720_av = ($bitrate_720 / $hd720);
+	$bitrate_sd_av = ($bitrate_sd / $sd);
+	
+
+	echo '<div class="exolight">';
+	echo $total_movies.' Movies';
+		echo '<div class="progress">';
+			echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="'.$hd1080_pc.'% 1080p / '.$hd720_pc.'% 720p / '.$sd_pc.'% SD" class="progress">';
+  				echo '<div class="progress-bar progress-bar-success" style="width: '.$hd1080_pc.'%">';
+    			echo '<span class="sr-only">'.$hd1080_pc.'% Complete (success)</span>';
+  				echo '</div>';
+  				echo '<div class="progress-bar progress-bar-warning" style="width: '.$hd720_pc.'%">';
+    			echo '<span class="sr-only">'.$hd720_pc.'% Complete (warning)</span>';
+  				echo '</div>';
+  				echo '<div class="progress-bar progress-bar-danger" style="width: '.$sd_pc.'%">';
+    			echo '<span class="sr-only">'.$sd_pc.'% Complete (danger)</span>';
+  				echo '</div>';
+  			echo '</div>';	
+		echo '</div>';
+	echo '<table>';
+	echo '<tr>';
+		echo '<th style="text-align: left; padding-right:5px;" class="exoextralight"></th>';
+		echo '<th style="text-align: centre;">Average Bitrate</th>';
+		echo '</tr>';
+	echo '<tr>';
+		echo '<td style="text-align: right; padding-right:5px; class="exoextralight">1080p</td>';
+		echo '<td style="text-align: centre; class="exoextralight">'.number_format($bitrate_1080_av,2).' Mbps</td>';
+	echo '</tr>';
+	echo '<tr>';
+		echo '<td style="text-align: right; padding-right:5px; class="exoextralight">720p</td>';
+		echo '<td style="text-align: centre; class="exoextralight">'.number_format($bitrate_720_av,2).' Mbps</td>';
+	echo '</tr>';
+	echo '<tr>';
+		echo '<td style="text-align: right; padding-right:5px; class="exoextralight">SD</td>';
+		echo '<td style="text-align: centre; class="exoextralight">'.number_format($bitrate_sd_av,2).' Mbps</td>';
+	echo '</tr>';
+	echo '</table>';
+	echo '</div>';
+}
+
 function makeBandwidthBars()
 {
 	$array = getBandwidth();
