@@ -193,6 +193,10 @@
 			            	$left_column_top_refresh.load('assets/php/left_column_top_ajax.php');
 			        	}, 300000); // 5 minutes
 
+			        	var refreshlongest = setInterval(function(){
+			            	$plex_movie_stats_refresh.load("assets/php/plex_movie_stats_ajax.php");
+			        	}, 3600000); // 1 hour
+
 			        	// Load these sections only if Plex has changed states
 			        	var theResource = "assets/misc/plexcheckfile2.txt";
  
