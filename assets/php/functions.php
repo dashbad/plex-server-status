@@ -427,7 +427,7 @@ function makeNowPlaying()
 			if ($type == "movie"):
 				// Build information for a movie
 				$movieArt = $mediaXML->Video['thumb'];
-				echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="plex.php?img=' . urlencode($network.':'.$plex_port . $movieArt) . '" alt="...">';
 				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
 				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
@@ -441,7 +441,7 @@ function makeNowPlaying()
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];
-				echo '<img src="'.$network.':'.$plex_port.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="plex.php?img=' . urlencode($network.':'.$plex_port . $tvArt) . '" alt="...">';
 				echo '<div class="caption">';
 				$showTitle = $mediaXML->Video['grandparentTitle'];
 				$episodeTitle = $mediaXML->Video['title'];
