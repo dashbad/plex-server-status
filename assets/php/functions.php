@@ -1,6 +1,6 @@
 <?php
 
-	$config_path = "/home/dash/sites/server/status/assets/php/config.ini"; //path to config file, recommend you place it outside of web root
+	$config_path = "/var/www-credentials/config.ini"; //path to config file, recommend you place it outside of web root
 	
 	Ini_Set( 'display_errors', false);
 	include("lib/phpseclib0.3.5/Net/SSH2.php");
@@ -8,6 +8,7 @@
 	
 	$local_pfsense_ip = $config['network']['local_pfsense_ip'];
 	$local_server_ip = $config['network']['local_server_ip'];
+	$pfsense_if_name = $config['network']['pfsense_if_name'];
 	$wan_domain = $config['network']['wan_domain'];
 	$plex_server_ip = $config['network']['plex_server_ip'];
 	$ssh_username = $config['credentials']['ssh_username'];
@@ -22,6 +23,16 @@
 	$zpools = $config['zpools'];
 	$filesystems = $config['filesystems'];
 
+	// Set the path for the Plex Token
+$plexTokenCache = '../misc/plex_token.txt';
+// Check to see if the plex token exists and is younger than one week
+// if not grab it and write it to our caches folder
+if (file_exists($plexTokenCache) && (filemtime($plexTokenCache) > (time() - 60 * 60 * 24 * 7))) {
+	$plexToken = file_get_contents("../misc/plex_token.txt");
+} else {
+	file_put_contents($plexTokenCache, getPlexToken());
+	$plexToken = file_get_contents("../misc/plex_token.txt");
+}
 	
 
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
@@ -97,12 +108,14 @@ function makeLoadBars()
 function getFreeRam()
 {
 	$top = shell_exec('free -m');
-        #echo $top;
-        $findme = 'Mem:';
-        $MemStart = strpos($top, $findme);
-        $totalRam = (substr($top, $MemStart + 14, 4))/1000; // GB
-        $freeRam = (substr($top, $MemStart + 110, 4))/1000; // GB
-        $usedRam = $totalRam - $freeRam;
+	$output = preg_split('/[\s]/', $top);
+		for ($i=count($output)-1; $i>=0; $i--) {
+		if ($output[$i] == '') unset ($output[$i]);
+		}
+	$output = array_values($output);
+	$totalRam = $output[7]/1000; // GB
+	$freeRam = $output[16]/1000; // GB
+	$usedRam = $totalRam - $freeRam;
 	return array (sprintf('%.0f',($usedRam / $totalRam) * 100), 'Used Ram', $usedRam, $totalRam);
 }
 
@@ -147,10 +160,10 @@ function printZpools()
 	$status = zpoolHealth($name);
 	$fs = zfsFilesystems($name);
 	$fs_avail = $fs[0][3];
-	$fs_used = 0;
-	foreach($fs as $fs_ind => $fss) {
-		$fs_used += $fss[1];
-		}
+	$fs_used = $fs[0][1];
+	#foreach($fs as $fs_ind => $fss) {
+	#	$fs_used += $fss[1];
+	#	}
 	$fs_total = $fs_used + $fs_avail;
 	$fs_pct = number_format(($fs_used / $fs_total)*100);
 	$online = $status == "ONLINE" ? 'True' : 'False';
@@ -338,7 +351,7 @@ function makeRecenlyReleased()
 {
 	global $plex_port;
 	global $plex_server_ip;
-	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	global $plexToken ;	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/recentlyAdded');
 	$clientIP = get_client_ip();
 	$network = getNetwork();
@@ -404,7 +417,7 @@ function makeNowPlaying()
 {
 	global $plex_server_ip;
 	global $plex_port;
-	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	global $plexToken;	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$network = getNetwork();
 	$plexSessionXML = simplexml_load_file($plex_server_ip.'/status/sessions');
 
@@ -472,7 +485,7 @@ function plexMovieStats()
 {
 	global $plex_port;
 	global $plex_server_ip;
-	$plexToken = getPlexToken();	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	global $plexToken;	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
 	$plexNewestXML = simplexml_load_file($plex_server_ip.'/library/sections/4/all');
 	$clientIP = get_client_ip();
 	$network = getNetwork();
@@ -572,21 +585,22 @@ function getBandwidth()
     global $local_pfsense_ip;
 	global $ssh_username;
 	global $ssh_password;
+	global $pfsense_if_name;
 	$ssh = new Net_SSH2($local_pfsense_ip);
 	if (!$ssh->login($ssh_username,$ssh_password)) { // replace password and username with pfSense ssh username and password if you want to use this
 		exit('Login Failed');
 	}
 
-	$dump = $ssh->exec('vnstat -i pppoe0 -tr');
+	$dump = $ssh->exec('vnstat -i '.$pfsense_if_name.' -tr');
 	$output = preg_split('/[\.|\s]/', $dump);
 	for ($i=count($output)-1; $i>=0; $i--) {
 		if ($output[$i] == '') unset ($output[$i]);
 	}
 	$output = array_values($output);
-	$rxRate = $output[54];
-	$rxFormat = $output[56];
-	$txRate = $output[60];
-	$txFormat = $output[62];
+	$rxRate = $output[51];
+	$rxFormat = $output[53];
+	$txRate = $output[57];
+	$txFormat = $output[59];
 	if ($rxFormat == 'kbit/s') {
 		$rxRateMB = $rxRate / 1024;
 	} else {
