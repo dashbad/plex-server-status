@@ -23,6 +23,6 @@ weather_long = ''
 [zpools]
 name1 = 
 
-[Filesystems] ;formatted as mountpoint,name
+[filesystems] ;formatted as mountpoint,name
 FS1 = "/,root"
 
