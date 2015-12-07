@@ -271,17 +271,9 @@ function printDiskBarGB($dup, $name = "", $dsu, $dts)
 
 function ping()
 {
-	global $local_server_ip;
-	$clientIP = get_client_ip();
-	$pingIP = '8.8.8.8';
-	if($clientIP != $local_server_ip) {
-		$pingIP = $clientIP;
-	}
-	$terminal = shell_exec('ping -c 5 '.$pingIP);
-	$findme = 'dev =';
-	$start = strpos($terminal, $findme);
-	$avgPing = substr($terminal, ($start +13), 2);
-	return $avgPing;
+        $pingIP = '8.8.8.8';
+        $avgPing = round(shell_exec("ping -c 5 " . $pingIP . " | grep dev | awk -F '/' '{print $5}'" ));
+        return $avgPing;
 }
 
 function getNetwork() //returns wan_domain if you are outside your network, and local_server_ip if you are within the network
